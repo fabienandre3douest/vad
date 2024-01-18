@@ -105,11 +105,16 @@ export class MicVAD {
       })
     else stream = fullOptions.stream
 
-    const audioContext = new AudioContext()
-    const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
-      mediaStream: stream,
-    })
-
+    let audioContext: AudioContext, sourceNode: MediaStreamAudioSourceNode
+        if (fullOptions.sourceNode) {
+          sourceNode = fullOptions.sourceNode
+          audioContext = sourceNode.context
+        } else {
+          audioContext = new AudioContext();
+          sourceNode = new MediaStreamAudioSourceNode(audioContext, {
+            mediaStream: stream,
+          });
+        }
     const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
     audioNodeVAD.receive(sourceNode)
 
