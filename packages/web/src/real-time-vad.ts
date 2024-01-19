@@ -53,6 +53,8 @@ interface RealTimeVADOptionsWithoutStream
     AssetOptions {
   additionalAudioConstraints?: AudioConstraints
   stream: undefined
+  sourceNode: undefined
+  audioContext: undefined
 }
 
 interface RealTimeVADOptionsWithStream
@@ -60,6 +62,17 @@ interface RealTimeVADOptionsWithStream
     RealTimeVADCallbacks,
     AssetOptions {
   stream: MediaStream
+  sourceNode: undefined
+  audioContext: undefined
+}
+
+interface RealTimeVADOptionsWithSourceNode
+  extends FrameProcessorOptions,
+    RealTimeVADCallbacks,
+    AssetOptions {
+  stream: undefined
+  sourceNode: MediaStreamAudioSourceNode
+  audioContext: AudioContext
 }
 
 export type RealTimeVADOptions =
@@ -82,6 +95,8 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher,
   stream: undefined,
+  sourceNode: undefined,
+  audioContext: undefined
 }
 
 export class MicVAD {
@@ -106,15 +121,15 @@ export class MicVAD {
     else stream = fullOptions.stream
 
     let audioContext: AudioContext, sourceNode: MediaStreamAudioSourceNode
-        if (fullOptions.sourceNode) {
-          sourceNode = fullOptions.sourceNode
-          audioContext = sourceNode.context
-        } else {
-          audioContext = new AudioContext();
-          sourceNode = new MediaStreamAudioSourceNode(audioContext, {
-            mediaStream: stream,
-          });
-        }
+    if (fullOptions.sourceNode && fullOptions.audioContext) {
+      sourceNode = fullOptions.sourceNode
+      audioContext = fullOptions.audioContext
+    } else {
+      audioContext = new AudioContext()
+      sourceNode = new MediaStreamAudioSourceNode(audioContext, {
+        mediaStream: stream,
+      })
+    }
     const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
     audioNodeVAD.receive(sourceNode)
 
